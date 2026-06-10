@@ -4,8 +4,13 @@ import { useMemo, useState } from 'react'
 
 type FoodVerdict = 'junk' | 'healthy' | 'neutral'
 
+type KeywordRule = {
+  value: string
+  match: 'exact' | 'prefix'
+}
+
 type FoodRule = {
-  keywords: string[]
+  keywords: KeywordRule[]
   verdict: FoodVerdict
   emoji: string
   title: string
@@ -16,29 +21,29 @@ type FoodRule = {
 const rules: FoodRule[] = [
   {
     keywords: [
-      'apple',
-      'banana',
-      'berries',
-      'blueberry',
-      'broccoli',
-      'carrot',
-      'chicken',
-      'fish',
-      'lentils',
-      'oats',
-      'orange',
-      'salad',
-      'spinach',
-      'yogurt',
-      'овсян',
-      'яблок',
-      'банан',
-      'брокколи',
-      'морков',
-      'рыба',
-      'салат',
-      'творог',
-      'йогурт'
+      { value: 'apple', match: 'exact' },
+      { value: 'banana', match: 'exact' },
+      { value: 'berries', match: 'exact' },
+      { value: 'blueberry', match: 'exact' },
+      { value: 'broccoli', match: 'exact' },
+      { value: 'carrot', match: 'exact' },
+      { value: 'chicken', match: 'exact' },
+      { value: 'fish', match: 'exact' },
+      { value: 'lentils', match: 'exact' },
+      { value: 'oats', match: 'exact' },
+      { value: 'orange', match: 'exact' },
+      { value: 'salad', match: 'exact' },
+      { value: 'spinach', match: 'exact' },
+      { value: 'yogurt', match: 'exact' },
+      { value: 'овсян', match: 'prefix' },
+      { value: 'яблок', match: 'prefix' },
+      { value: 'банан', match: 'prefix' },
+      { value: 'брокколи', match: 'prefix' },
+      { value: 'морков', match: 'prefix' },
+      { value: 'рыба', match: 'prefix' },
+      { value: 'салат', match: 'prefix' },
+      { value: 'творог', match: 'prefix' },
+      { value: 'йогурт', match: 'prefix' }
     ],
     verdict: 'healthy',
     emoji: '🥦',
@@ -48,27 +53,27 @@ const rules: FoodRule[] = [
   },
   {
     keywords: [
-      'burger',
-      'candy',
-      'chips',
-      'cola',
-      'cookie',
-      'donut',
-      'fries',
-      'fried',
-      'hot dog',
-      'ice cream',
-      'pizza',
-      'soda',
-      'бургер',
-      'газиров',
-      'картошка фри',
-      'конфет',
-      'морожен',
-      'пицц',
-      'пончик',
-      'фастфуд',
-      'чипс'
+      { value: 'burger', match: 'exact' },
+      { value: 'candy', match: 'exact' },
+      { value: 'chips', match: 'exact' },
+      { value: 'cola', match: 'exact' },
+      { value: 'cookie', match: 'exact' },
+      { value: 'donut', match: 'exact' },
+      { value: 'fries', match: 'exact' },
+      { value: 'fried', match: 'exact' },
+      { value: 'hot dog', match: 'exact' },
+      { value: 'ice cream', match: 'exact' },
+      { value: 'pizza', match: 'exact' },
+      { value: 'soda', match: 'exact' },
+      { value: 'бургер', match: 'prefix' },
+      { value: 'газиров', match: 'prefix' },
+      { value: 'картошка фри', match: 'prefix' },
+      { value: 'конфет', match: 'prefix' },
+      { value: 'морожен', match: 'prefix' },
+      { value: 'пицц', match: 'prefix' },
+      { value: 'пончик', match: 'prefix' },
+      { value: 'фастфуд', match: 'prefix' },
+      { value: 'чипс', match: 'prefix' }
     ],
     verdict: 'junk',
     emoji: '🍟',
@@ -79,25 +84,25 @@ const rules: FoodRule[] = [
   },
   {
     keywords: [
-      'bread',
-      'cheese',
-      'coffee',
-      'egg',
-      'pasta',
-      'potato',
-      'rice',
-      'sandwich',
-      'soup',
-      'steak',
-      'сыр',
-      'кофе',
-      'паста',
-      'рис',
-      'картоф',
-      'суп',
-      'стейк',
-      'хлеб',
-      'яйц'
+      { value: 'bread', match: 'exact' },
+      { value: 'cheese', match: 'exact' },
+      { value: 'coffee', match: 'exact' },
+      { value: 'egg', match: 'exact' },
+      { value: 'pasta', match: 'exact' },
+      { value: 'potato', match: 'exact' },
+      { value: 'rice', match: 'exact' },
+      { value: 'sandwich', match: 'exact' },
+      { value: 'soup', match: 'exact' },
+      { value: 'steak', match: 'exact' },
+      { value: 'сыр', match: 'prefix' },
+      { value: 'кофе', match: 'prefix' },
+      { value: 'паста', match: 'prefix' },
+      { value: 'рис', match: 'prefix' },
+      { value: 'картоф', match: 'prefix' },
+      { value: 'суп', match: 'prefix' },
+      { value: 'стейк', match: 'prefix' },
+      { value: 'хлеб', match: 'prefix' },
+      { value: 'яйц', match: 'prefix' }
     ],
     verdict: 'neutral',
     emoji: '🍽️',
@@ -119,6 +124,33 @@ const fallbackRule: FoodRule = {
 
 const examples = ['Apple', 'Pizza', 'Rice', 'Овсянка', 'Чипсы']
 
+const normalizeFoodName = (value: string) =>
+  value
+    .normalize('NFKC')
+    .trim()
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}]+/gu, ' ')
+    .replace(/\s+/g, ' ')
+
+const exactTokenMatch = (foodName: string, keyword: string) =>
+  ` ${foodName} `.includes(` ${normalizeFoodName(keyword)} `)
+
+const prefixTokenMatch = (foodName: string, keyword: string) => {
+  const foodTokens = foodName.split(' ')
+  const keywordTokens = normalizeFoodName(keyword).split(' ')
+
+  return foodTokens.some((_, startIndex) =>
+    keywordTokens.every((keywordToken, offset) =>
+      foodTokens[startIndex + offset]?.startsWith(keywordToken)
+    )
+  )
+}
+
+const keywordMatches = (foodName: string, keyword: KeywordRule) =>
+  keyword.match === 'exact'
+    ? exactTokenMatch(foodName, keyword.value)
+    : prefixTokenMatch(foodName, keyword.value)
+
 const resultStyles: Record<FoodVerdict, string> = {
   healthy: 'border-emerald-300/70 bg-emerald-50/80',
   junk: 'border-rose-300/70 bg-rose-50/80',
@@ -129,7 +161,7 @@ export default function Home() {
   const [foodName, setFoodName] = useState('')
 
   const result = useMemo(() => {
-    const normalizedFoodName = foodName.trim().toLowerCase()
+    const normalizedFoodName = normalizeFoodName(foodName)
 
     if (!normalizedFoodName) {
       return null
@@ -137,7 +169,7 @@ export default function Home() {
 
     return (
       rules.find((rule) =>
-        rule.keywords.some((keyword) => normalizedFoodName.includes(keyword))
+        rule.keywords.some((keyword) => keywordMatches(normalizedFoodName, keyword))
       ) ?? fallbackRule
     )
   }, [foodName])
