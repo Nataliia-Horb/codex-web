@@ -3,14 +3,14 @@ import type { ReactNode } from 'react'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'Junk or No',
+  title: 'Вредная еда или нет?',
   description:
-    'A friendly food checker that helps you decide whether a food is junk, wholesome, or neutral.'
+    'Проверка еды по справочнику продуктов, составу и способу приготовления.'
 }
 
 export default function RootLayout({ children }: Readonly<{ children: ReactNode }>) {
   return (
-    <html lang="en">
+    <html lang="ru">
       <body>{children}</body>
     </html>
   )
